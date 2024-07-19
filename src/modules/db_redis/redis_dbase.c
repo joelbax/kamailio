@@ -19,6 +19,7 @@
  *
  */
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -58,9 +59,21 @@ static void db_redis_dump_reply(redisReply *reply)
  * Initialize database module
  * No function should be called before this
  */
-db1_con_t *db_redis_init(const str *_url)
+db1_con_t *db_redis_init0(const str *_url)
 {
 	return db_do_init(_url, (void *)db_redis_new_connection);
+}
+
+db1_con_t *db_redis_init(const str *_url)
+{
+	pthread_t tid;
+	db1_con_t *ret;
+
+	pthread_create( &tid, NULL, (void *(*)(void *))db_redis_init0, (void *)_url);
+
+	pthread_join(tid, (void **)&ret);
+
+	return ret;
 }
 
 /*
